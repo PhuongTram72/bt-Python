@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Visualization</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin: 20px 0;
+            color: #333;
+        }
+        #load-chart-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #load-chart-btn:hover {
+            background-color: #0056b3;
+        }
+        #curve_chart {
+            width: 90%;
+            max-width: 900px;
+            height: 500px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+
+        function parseTimeString(timeString) {
+            const [datePart, timePart] = timeString.split('T');
+            const [year, month, day] = datePart.split('-');
+            const [hour, minute, second] = timePart.split(':');
+            return new Date(year, month - 1, day, hour, minute, second);
+        }
+
+        function drawChart(json) {
+            const dataArray = [['Time', json.name]];
+            json.data.forEach(item => {
+                dataArray.push([parseTimeString(item.t), item.v]);
+            });
+
+            const data = google.visualization.arrayToDataTable(dataArray);
+            const options = {
+                title: json.name,
+                legend: { position: 'bottom' },
+                hAxis: { title: 'Time' },
+                vAxis: { title: 'Value' },
+                curveType: 'function'
+            };
+
+            const chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+            chart.draw(data, options);
+        }
+
+        function fetchChartData() {
+            const xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        const json = JSON.parse(xhr.responseText);
+                        drawChart(json);
+                    } else {
+                        console.error('Error fetching the API:', xhr.status);
+                    }
+                }
+            };
+
+            xhr.open("GET", "/api.aspx?sid=1", true);
+            xhr.send();
+        }
+    </script>
+</head>
+<body>
+    <h1>Room Temperature Visualization</h1>
+    <button id="load-chart-btn" onclick="fetchChartData()">Load Chart Data</button>
+    <div id="curve_chart"></div>
+</body>
+</html>
